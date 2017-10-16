@@ -73,35 +73,26 @@ elif FLAGS.job_name == "worker":
     	train_reader = tf.TextLineReader()
     	train_data_line=train_reader.read(train_filename_queue)
 	with tf.name_scope('placeholder'):
-	    y = tf.placeholder(tf.float32, [None, 2]) 
+	    y = tf.placeholder(tf.float32, [None, 1]) 
             sp_indices = tf.placeholder(tf.int64)
             shape = tf.placeholder(tf.int64)
             ids_val = tf.placeholder(tf.int64)
             weights_val = tf.placeholder(tf.float32)
-	
-	with tf.name_scope('parameter'):
-    	    weights = tf.SparseTensor(sp_indices, weights_val, shape)
-
-	with tf.name_scope('loss'):
-            loss,loss2 = LogisticRegressionModel(weights, y, num_features)
 	'''
 	with tf.name_scope('parameter'):
+    	    x_data = tf.SparseTensor(sp_indices, weights_val, shape)
 
-    	    weights = tf.SparseTensor(sp_indices, weights_val, shape)
-    	    weight =  tf.Variable(tf.constant(0.0, shape = [num_features, 2]))
-	    b = tf.Variable(tf.constant(0.1, shape=[2]))
+	'''
+	with tf.name_scope('parameter'):
+    	    x_data = tf.sparse_to_dense(sp_indices, shape, weights_val)
     	
-
-	    yhat = tf.sparse_tensor_dense_matmul(weights, weight) + b
-
-	with tf.name_scope('loss'):
-	    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=yhat)
-            loss = tf.reduce_mean(cross_entropy)
-	'''
+    	
+	loss = SVMModel_with_rfb(x_data, y, num_features, batch_size)
+	
 	# specify optimizer
 	with tf.name_scope('train'):
 	    grad_op = get_optimizer( "Adam", learning_rate)
-	    train_op = grad_op.minimize(loss2, global_step=global_step)
+	    train_op = grad_op.minimize(loss, global_step=global_step)
 
 	init_op = tf.global_variables_initializer()
 	
@@ -126,13 +117,13 @@ elif FLAGS.job_name == "worker":
 	step = 0
 	
 	while (not sv.should_stop()) and (step <= 100000 ) and (cost >= targeted_loss) :#n_batches_per_epoch * Epoch
-	    label, label_one_hot, indices, sparse_indices, weight_list, read_count = read_batch(sess, train_data_line, batch_size)
+	    label_one_hot,label,indices,sparse_indices,weight_list,read_count = read_batch(sess, train_data_line, batch_size)
 	   
-            _,cost, step= sess.run([train_op, loss, global_step], feed_dict = { y: label, 
-										sp_indices: sparse_indices, 
+            _,cost, step= sess.run([train_op, loss, global_step], feed_dict = { y: label,
+										sp_indices: sparse_indices,
 										shape: [read_count, num_features],
-                								ids_val: indices, 
-	    									weights_val: weight_list})
+										ids_val: indices,
+										weights_val: weight_list})
 	    duration = time.time()-batch_time
 	    '''
 	    re = str(step+1)+","+str(n_PS)+","+str(n_Workers)+","+str(n_intra_threads)+","+str(n_inter_threads)+","+str(cost)+","+str(duration)

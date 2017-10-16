@@ -21,7 +21,7 @@ def get_optimizer(optimizer, learning_rate):
 def LogisticRegressionModel(weights, y, num_features):
     with tf.name_scope('parameter'):
 	weight =  tf.Variable(tf.constant(0.0, shape = [num_features, 2]))
-	alpha = tf.constant([0.01])
+	alpha = tf.constant([0.001])
 	b = tf.Variable(tf.constant(0.1, shape=[2]))
 	y_ = tf.sparse_tensor_dense_matmul(weights, weight) + b
     with tf.name_scope('loss'):
@@ -38,7 +38,7 @@ def SVMModel_with_linear(x_data, y, num_features):
 	weight =  tf.Variable(tf.constant(0.0, shape = [num_features, 1]))
 	b = tf.Variable(tf.constant(0.1, shape=[1]))
 	y_ = tf.subtract(tf.sparse_tensor_dense_matmul(x_data, weight), b)
-	alpha = tf.constant([0.01])
+	alpha = tf.constant([0.001])
     with tf.name_scope('loss'):
 	l2_norm = tf.reduce_sum(tf.square(weight))
 	classification_term = tf.reduce_mean(tf.maximum(0., tf.subtract(1., tf.multiply(y_, y))))
@@ -52,13 +52,13 @@ def SVMModel_with_rfb(x_data, y, num_features, batch_size):
     gamma = tf.constant(-25.0)
     b = tf.Variable(tf.constant(0.1, shape=[1,batch_size]))
     x_data_hat = tf.transpose(x_data)
-    sq_dists = tf.multiply(2., tf.matmul(x_data, x_data_hat, a_is_sparse=True, b_is_sparse=True))
+    sq_dists = tf.multiply(2., tf.matmul(x_data, x_data, a_is_sparse=True, b_is_sparse=True, transpose_b=True))
     my_kernel = tf.exp(tf.multiply(gamma, tf.abs(sq_dists)))
 
     # Compute SVM Model
     first_term = tf.reduce_sum(b)
     b_vec_cross = tf.matmul(tf.transpose(b), b)
-    y_target_cross = tf.matmul(y_target, tf.transpose(y_target))
+    y_target_cross = tf.matmul(y, tf.transpose(y))
     second_term = tf.reduce_sum(tf.multiply(my_kernel, tf.multiply(b_vec_cross, y_target_cross)))
     loss = tf.negative(tf.subtract(first_term, second_term))
 
