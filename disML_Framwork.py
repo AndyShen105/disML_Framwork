@@ -18,9 +18,9 @@ tf.app.flags.DEFINE_string("job_name", "", "Either 'ps' or 'worker'")
 tf.app.flags.DEFINE_integer("task_index", 0, "Index of task within the job")
 tf.app.flags.DEFINE_float("targeted_loss", 0.05, "targted accuracy of model")
 tf.app.flags.DEFINE_string("optimizer", "SGD", "optimizer we adopted")
-tf.app.flags.DEFINE_integer("Batch_size", 500, "Batch size")
-tf.app.flags.DEFINE_integer("num_Features", 3231961, "number of features")
-tf.app.flags.DEFINE_float("Learning_rate", 0.001, "Learning rate")
+tf.app.flags.DEFINE_integer("Batch_size", 1000, "Batch size")
+tf.app.flags.DEFINE_integer("num_Features", 54686452, "number of features")
+tf.app.flags.DEFINE_float("Learning_rate", 0.01, "Learning rate")
 tf.app.flags.DEFINE_integer("Epoch", 1, "Epoch")
 tf.app.flags.DEFINE_integer("n_intra_threads", 0, "n_intra_threads")
 tf.app.flags.DEFINE_integer("n_inter_threads", 0, "n_inter_threads")
@@ -68,8 +68,9 @@ elif FLAGS.job_name == "worker":
 	global_step = tf.get_variable('global_step',[],initializer = tf.constant_initializer(0),trainable = False)
 
 	#inout data
-	trainset_files=[("/home/andy_shen/code/url_svmlight/Day%d" % i)+".svm" for i in range(121)]
-    	train_filename_queue = tf.train.string_input_producer(trainset_files)
+	#trainset_files=[("/root/data/url_svmlight/Day%d" % i)+".svm" for i in range(121)]
+    	trainset_files=["/root/data/kdd12.tr"]
+	train_filename_queue = tf.train.string_input_producer(trainset_files)
     	train_reader = tf.TextLineReader()
     	train_data_line=train_reader.read(train_filename_queue)
 	with tf.name_scope('placeholder'):
@@ -78,20 +79,20 @@ elif FLAGS.job_name == "worker":
             shape = tf.placeholder(tf.int64)
             ids_val = tf.placeholder(tf.int64)
             weights_val = tf.placeholder(tf.float32)
-	'''
+	 	
 	with tf.name_scope('parameter'):
     	    x_data = tf.SparseTensor(sp_indices, weights_val, shape)
 
 	'''
 	with tf.name_scope('parameter'):
     	    x_data = tf.sparse_to_dense(sp_indices, shape, weights_val)
-    	
-    	
-	loss = SVMModel_with_rfb(x_data, y, num_features, batch_size)
+    	'''
+    	loss = SVMModel_with_linear(x_data, y, num_features)
+	#loss,loss_l2 = LogisticRegressionModel(x_data, y, num_features)
 	
 	# specify optimizer
 	with tf.name_scope('train'):
-	    grad_op = get_optimizer( "Adam", learning_rate)
+	    grad_op = get_optimizer( "SGD", learning_rate)
 	    train_op = grad_op.minimize(loss, global_step=global_step)
 
 	init_op = tf.global_variables_initializer()
@@ -116,7 +117,7 @@ elif FLAGS.job_name == "worker":
 	cost = 1000000.0
 	step = 0
 	
-	while (not sv.should_stop()) and (step <= 100000 ) and (cost >= targeted_loss) :#n_batches_per_epoch * Epoch
+	while (not sv.should_stop()) and (step <= 5000 ):# and (cost >= targeted_loss) :#n_batches_per_epoch * Epoch
 	    label_one_hot,label,indices,sparse_indices,weight_list,read_count = read_batch(sess, train_data_line, batch_size)
 	   
             _,cost, step= sess.run([train_op, loss, global_step], feed_dict = { y: label,
@@ -125,12 +126,12 @@ elif FLAGS.job_name == "worker":
 										ids_val: indices,
 										weights_val: weight_list})
 	    duration = time.time()-batch_time
-	    '''
+	    
 	    re = str(step+1)+","+str(n_PS)+","+str(n_Workers)+","+str(n_intra_threads)+","+str(n_inter_threads)+","+str(cost)+","+str(duration)
-	    save = open("re.csv","a+")
+	    save = open("re3.csv","a+")
 	    save.write(re+"\r\n")
 	    save.close()
-	    '''
+	    
 	    print("Step: %d," % (step+1),
                             " Loss: %f" % cost,
                             " Bctch_Time: %fs" % float(duration))
