@@ -4,7 +4,7 @@
 # $3 is the optimizer of model
 # $4 is the targted_loss of model
 # $5 is the tensorflow port
-# $6 is the empoch
+# $6 is the ml_model
 # $7 batch size
 # ps.sh run in ssd42
 
@@ -77,7 +77,7 @@ do
             then
                 sleep 0.5
             fi
-            ssh $ip python /root/code/disML_Framwork/disML_Framwork.py $ps $worker --job_name=worker --task_index=$index --targted_loss=$4 --Epoch=$6 --optimizer=$3 --n_intra_threads=$7 --n_inter_threads=$8 #>> /root/code/$index".temp"
+            ssh $ip python /root/code/disML_Framwork/disML_Framwork.py $ps $worker --job_name=worker --task_index=$index --targted_loss=$4 --ML_model=$6 --optimizer=$3 --n_intra_threads=$7 --batch_size=$8 --num_Features=$9 #>> /root/code/$index".temp"
             echo "worker"$index" complated"
             echo "1">temp$index
         fi
