@@ -24,7 +24,6 @@ tf.app.flags.DEFINE_integer("num_Features", 3231961, "number of features")
 tf.app.flags.DEFINE_float("Learning_rate", 0.0001, "Learning rate")
 tf.app.flags.DEFINE_integer("Epoch", 1, "Epoch")
 tf.app.flags.DEFINE_integer("n_intra_threads", 0, "n_intra_threads")
-tf.app.flags.DEFINE_integer("n_inter_threads", 0, "n_inter_threads")
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -70,11 +69,14 @@ elif FLAGS.job_name == "worker":
 	global_step = tf.get_variable('global_step',[],initializer = tf.constant_initializer(0),trainable = False)
 
 	#inout data
-	#trainset_files=[("/root/data/url_svmlight/Day%d" % i)+".svm" for i in range(121)]
-    	trainset_files=["hdfs://ssd02:8020/user/root/train_data/kdd12.tr"]
+	if FLAGS.ML_model == "SVM":
+            trainset_files = [("hdfs://ssd02:8020/user/root/train_data/url_svmlight/Day%d" % i) + ".svm" for i in range(121)]
+        else:
+            trainset_files=["hdfs://ssd02:8020/user/root/train_data/kdd12.tr"]
 	train_filename_queue = tf.train.string_input_producer(trainset_files)
     	train_reader = tf.TextLineReader()
     	train_data_line=train_reader.read(train_filename_queue)
+	
 	with tf.name_scope('placeholder'):
 	    y_shape = 2
 	    if FLAGS.ML_model=="SVM":
@@ -87,18 +89,19 @@ elif FLAGS.job_name == "worker":
 	 	
 	with tf.name_scope('parameter'):
     	    x_data = tf.SparseTensor(sp_indices, weights_val, shape)
-	    #x_data_SVM = tf.sparse_to_dense(sp_indices, shape, weights_val)
 	
 	with tf.name_scope('loss'):
-    	    SVM_loss = SVMModel_with_linear(x_data, y, num_features)
-	    LR_loss,LR_loss_l2 = LogisticRegressionModel(x_data, y, num_features)
-	
+	    if FLAGS.ML_model == "SVM":
+    		loss = SVMModel_with_linear(x_data, y, num_features)
+	    else:
+		loss= LogisticRegressionModel(x_data, y, num_features)
+	tf.summary.scalar('loss', loss)
 	# specify optimizer
 	with tf.name_scope('train'):
 	    grad_op = get_optimizer( Optimizer, learning_rate)
-	    LR_train_op = grad_op.minimize(LR_loss, global_step=global_step)
-	    SVM_train_op = grad_op.minimize(SVM_loss, global_step=global_step)
-
+	    train_op = grad_op.minimize(loss, global_step=global_step)
+	saver = tf.train.Saver()
+        summary_op = tf.merge_all_summaries()
 	init_op = tf.global_variables_initializer()
     	sess_config = tf.ConfigProto(
         	allow_soft_placement=True,
@@ -107,7 +110,11 @@ elif FLAGS.job_name == "worker":
 
     sv = tf.train.Supervisor(is_chief=is_chief,
 			     init_op=init_op, 
-                             global_step=global_step)
+                             global_step=global_step,
+			     logdir="/tmp/train_logs",
+			     summary_op=summary_op,
+			     saver=saver,
+			     save_model_secs=600)
 
     server_grpc_url = "grpc://" + workers[FLAGS.task_index]
     state = False
@@ -120,13 +127,13 @@ elif FLAGS.job_name == "worker":
 	while (not sv.should_stop()) and (step <= 50 ) and not (cost < targeted_loss and step >= 5000) :#n_batches_per_epoch * Epoch
 	    label_one_hot,label,indices,sparse_indices,weight_list,read_count = read_batch(sess, train_data_line, batch_size)
 	    if FLAGS.ML_model=="LR":	
-            	_,cost, step= sess.run([LR_train_op, LR_loss, global_step], feed_dict = { y: label_one_hot,
+            	_,cost, step= sess.run([train_op, loss, global_step], feed_dict = { y: label_one_hot,
 										sp_indices: sparse_indices,
 										shape: [read_count, num_features],
 										ids_val: indices,
 										weights_val: weight_list})
 	    else:
-		_,cost, step= sess.run([SVM_train_op, SVM_loss, global_step], feed_dict = { y: label,
+		_,cost, step= sess.run([train_op, loss, global_step], feed_dict = { y: label,
 										sp_indices: sparse_indices,
 										shape: [read_count, num_features],
 										ids_val: indices,
