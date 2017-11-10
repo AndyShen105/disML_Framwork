@@ -18,9 +18,10 @@ def get_optimizer(optimizer, learning_rate):
     elif optimizer == "RMSProp":
 	return  tf.train.RMSProp(learning_rate)
 
-def LogisticRegressionModel(weights, y, num_features):
+def LogisticRegressionModel(weights, y, num_features, variable_partition_num=100):
     with tf.name_scope('parameter'):
-	weight =  tf.Variable(tf.constant(0.0, shape = [num_features, 2]))
+	weight = tf.get_variable("weight", initializer=tf.constant(0.0, shape=[num_features, 2]),
+                                 partitioner=tf.fixed_size_partitioner(variable_partition_num))
 	alpha = tf.constant([0.001])
 	b = tf.Variable(tf.constant(0.1, shape=[2]))
 	y_ = tf.sparse_tensor_dense_matmul(weights, weight) + b

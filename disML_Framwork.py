@@ -17,11 +17,11 @@ os.environ['GRPC_VERBOSITY_LEVEL']='DEBUG'
 tf.app.flags.DEFINE_string("job_name", "", "Either 'ps' or 'worker'")
 tf.app.flags.DEFINE_string("ML_model", "LR", "ML model'")
 tf.app.flags.DEFINE_integer("task_index", 0, "Index of task within the job")
-tf.app.flags.DEFINE_float("targeted_loss", 0.05, "targted accuracy of model")
+tf.app.flags.DEFINE_float("targeted_loss", 0.07, "targted accuracy of model")
 tf.app.flags.DEFINE_string("optimizer", "SGD", "optimizer we adopted")
-tf.app.flags.DEFINE_integer("Batch_size", 1000, "Batch size")
+tf.app.flags.DEFINE_integer("Batch_size", 500, "Batch size")
 tf.app.flags.DEFINE_integer("num_Features", 3231961, "number of features")
-tf.app.flags.DEFINE_float("Learning_rate", 0.001, "Learning rate")
+tf.app.flags.DEFINE_float("Learning_rate", 0.0001, "Learning rate")
 tf.app.flags.DEFINE_integer("Epoch", 1, "Epoch")
 tf.app.flags.DEFINE_integer("n_intra_threads", 0, "n_intra_threads")
 tf.app.flags.DEFINE_integer("n_inter_threads", 0, "n_inter_threads")
@@ -70,8 +70,8 @@ elif FLAGS.job_name == "worker":
 	global_step = tf.get_variable('global_step',[],initializer = tf.constant_initializer(0),trainable = False)
 
 	#inout data
-	trainset_files=[("/root/data/url_svmlight/Day%d" % i)+".svm" for i in range(121)]
-    	#trainset_files=["/root/data/kdd12.tr"]
+	#trainset_files=[("/root/data/url_svmlight/Day%d" % i)+".svm" for i in range(121)]
+    	trainset_files=["hdfs://ssd02:8020/user/root/train_data/kdd12.tr"]
 	train_filename_queue = tf.train.string_input_producer(trainset_files)
     	train_reader = tf.TextLineReader()
     	train_data_line=train_reader.read(train_filename_queue)
@@ -96,7 +96,7 @@ elif FLAGS.job_name == "worker":
 	# specify optimizer
 	with tf.name_scope('train'):
 	    grad_op = get_optimizer( Optimizer, learning_rate)
-	    LR_train_op = grad_op.minimize(LR_loss_l2, global_step=global_step)
+	    LR_train_op = grad_op.minimize(LR_loss, global_step=global_step)
 	    SVM_train_op = grad_op.minimize(SVM_loss, global_step=global_step)
 
 	init_op = tf.global_variables_initializer()
@@ -117,7 +117,7 @@ elif FLAGS.job_name == "worker":
 	batch_time = time.time()
 	cost = 1000000.0
 	step = 0
-	while (not sv.should_stop()) and (step <= 20000 ):# and (cost >= targeted_loss) :#n_batches_per_epoch * Epoch
+	while (not sv.should_stop()) and (step <= 50 ) and not (cost < targeted_loss and step >= 5000) :#n_batches_per_epoch * Epoch
 	    label_one_hot,label,indices,sparse_indices,weight_list,read_count = read_batch(sess, train_data_line, batch_size)
 	    if FLAGS.ML_model=="LR":	
             	_,cost, step= sess.run([LR_train_op, LR_loss, global_step], feed_dict = { y: label_one_hot,
@@ -134,8 +134,8 @@ elif FLAGS.job_name == "worker":
 	
 	    duration = time.time()-batch_time
 	    
-	    re = str(step+1)+","+str(n_Workers)+","+str(n_intra_threads)+","+str(cost)+","+str(duration)
-	    process = open("/root/ex_result/baseline/"+FLAGS.ML_model+"_process.csv","a+")
+	    re = str(step+1)+","+str(n_Workers)+","+str(n_intra_threads)+","+str(cost)+","+str(duration)+","+str(time.time())
+	    process = open("/root/ex_result/baseline/kdd12_"+FLAGS.ML_model+"_"+str(learning_rate)+"_"+str(batch_size)+"_process.csv","a+")
 	    process.write(re+"\r\n")
 	    process.close()
 	    
@@ -145,7 +145,7 @@ elif FLAGS.job_name == "worker":
 	   
             batch_time = time.time()
 	final_re = str(step+1)+","+str(n_Workers)+","+str(n_intra_threads)+","+str(cost)+","+str(float(time.time()-begin_time))
-	result = open("/root/ex_result/baseline/"+FLAGS.ML_model+"_result.csv","a+")
+	result = open("/root/ex_result/baseline/kdd12_"+FLAGS.ML_model+"_"+str(learning_rate)+"_"+str(batch_size)+"_result.csv","a+")
 	result.write(final_re+"\r\n")
 	result.close()	
     sv.stop 
