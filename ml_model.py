@@ -18,7 +18,7 @@ def get_optimizer(optimizer, learning_rate):
     elif optimizer == "RMSProp":
 	return  tf.train.RMSProp(learning_rate)
 
-def LogisticRegressionModel(weights, y, num_features, variable_partition_num=100):
+def LogisticRegressionModel(weights, y, num_features, variable_partition_num):
     with tf.name_scope('parameter'):
 	weight_lr = tf.get_variable("weight_lr", initializer=tf.constant(0.0, shape=[num_features, 2]),
                                  partitioner=tf.fixed_size_partitioner(variable_partition_num))
@@ -32,7 +32,7 @@ def LogisticRegressionModel(weights, y, num_features, variable_partition_num=100
 	loss_with_l2 = tf.add(loss, tf.multiply(alpha, l2_norm))
     return loss,loss_with_l2
 
-def SVMModel_with_linear(x_data, y, num_features, variable_partition_num=100):
+def SVMModel_with_linear(x_data, y, num_features, variable_partition_num):
     # Loss = max(0, 1-pred*actual) + alpha * L2_norm(A)^2
     # L2 regularization parameter, alpha
     with tf.name_scope('parameter'):
