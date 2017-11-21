@@ -24,6 +24,7 @@ tf.app.flags.DEFINE_integer("num_Features", 3231961, "number of features")
 tf.app.flags.DEFINE_float("Learning_rate", 0.0001, "Learning rate")
 tf.app.flags.DEFINE_integer("Epoch", 1, "Epoch")
 tf.app.flags.DEFINE_integer("n_intra_threads", 0, "n_intra_threads")
+tf.app.flags.DEFINE_integer("n_partitions", 1, "n_partitions")
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -33,6 +34,7 @@ num_features = FLAGS.num_Features
 batch_size = FLAGS.Batch_size
 learning_rate = FLAGS.Learning_rate
 targeted_loss = FLAGS.targeted_loss
+n_partitions = FLAGS.n_partitions
 Optimizer = FLAGS.optimizer
 Epoch = FLAGS.Epoch
 n_intra_threads = FLAGS.n_intra_threads
@@ -55,7 +57,8 @@ server = tf.train.Server(
     job_name=FLAGS.job_name,
     task_index=FLAGS.task_index,
     config=server_config)
-	
+	argeted_loss
+
 if FLAGS.job_name == "ps":
     server.join()
 elif FLAGS.job_name == "worker":
@@ -91,8 +94,8 @@ elif FLAGS.job_name == "worker":
     	    x_data = tf.SparseTensor(sp_indices, weights_val, shape)
 	
 	with tf.name_scope('loss_function'):
-    	    SVM_loss = SVMModel_with_linear(x_data, y, num_features)
-	    LR_loss, LR_loss_l2= LogisticRegressionModel(x_data, y, num_features)
+    	    SVM_loss = SVMModel_with_linear(x_data, y, num_features, n_partitions)
+	    LR_loss, LR_loss_l2= LogisticRegressionModel(x_data, y, num_features, n_partitions)
 	tf.summary.scalar('cost_entropy', SVM_loss)
 	tf.summary.scalar('cost_entropy', LR_loss)
 
