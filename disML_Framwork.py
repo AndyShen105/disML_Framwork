@@ -123,7 +123,7 @@ elif FLAGS.job_name == "worker":
 	batch_time = time.time()
 	cost = 1000000.0
 	step = 0
-	while (not sv.should_stop()) and (step <= 50000 ) :#and not (cost < targeted_loss and step >= 5000) :#n_batches_per_epoch * Epoch
+	while (not sv.should_stop()) and (step <= 50000 ) and not (cost < targeted_loss and step>5000) :
 	    label_one_hot,label,indices,sparse_indices,weight_list,read_count = read_batch(sess, train_data_line, batch_size)
 	    if FLAGS.ML_model=="LR":	
             	_,cost, step= sess.run([train_op, LR_loss, global_step], feed_dict = { y: label_one_hot,
@@ -144,7 +144,7 @@ elif FLAGS.job_name == "worker":
 		saver.save(sess, save_path="train_logs", global_step=global_step)
 		check_point_time = time.time()
 	    re = str(step+1)+","+str(n_Workers)+","+str(n_intra_threads)+","+str(cost)+","+str(duration)+","+str(time.time())
-	    process = open("/root/ex_result/baseline/kdd12_"+FLAGS.ML_model+"_"+str(learning_rate)+"_"+str(batch_size)+"_process.csv","a+")
+	    process = open("/root/ex_result/baseline/new_url_"+FLAGS.ML_model+"_"+str(learning_rate)+"_"+str(batch_size)+"_process.csv","a+")
 	    process.write(re+"\r\n")
 	    process.close()
 	    
@@ -154,7 +154,7 @@ elif FLAGS.job_name == "worker":
 	   
             batch_time = time.time()
 	final_re = str(step+1)+","+str(n_Workers)+","+str(n_intra_threads)+","+str(cost)+","+str(float(time.time()-begin_time))
-	result = open("/root/ex_result/baseline/kdd12_"+FLAGS.ML_model+"_"+str(learning_rate)+"_"+str(batch_size)+"_result.csv","a+")
+	result = open("/root/ex_result/baseline/new_url_"+FLAGS.ML_model+"_"+str(learning_rate)+"_"+str(batch_size)+"_result.csv","a+")
 	result.write(final_re+"\r\n")
 	result.close()	
     sv.stop 

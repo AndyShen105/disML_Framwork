@@ -32,11 +32,12 @@ def LogisticRegressionModel(weights, y, num_features, variable_partition_num=100
 	loss_with_l2 = tf.add(loss, tf.multiply(alpha, l2_norm))
     return loss,loss_with_l2
 
-def SVMModel_with_linear(x_data, y, num_features):
+def SVMModel_with_linear(x_data, y, num_features, variable_partition_num=100):
     # Loss = max(0, 1-pred*actual) + alpha * L2_norm(A)^2
     # L2 regularization parameter, alpha
     with tf.name_scope('parameter'):
-	weight =  tf.Variable(tf.constant(0.0, shape = [num_features, 1]))
+	weight = tf.get_variable("weight", initializer=tf.constant(0.0, shape=[num_features, 2]),
+                                 partitioner=tf.fixed_size_partitioner(variable_partition_num))
 	b = tf.Variable(tf.constant(0.1, shape=[1]))
 	y_ = tf.subtract(tf.sparse_tensor_dense_matmul(x_data, weight), b)
 	alpha = tf.constant([0.001])
