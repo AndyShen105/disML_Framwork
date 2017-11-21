@@ -70,9 +70,9 @@ elif FLAGS.job_name == "worker":
 
 	#inout data
 	if FLAGS.ML_model == "SVM":
-            trainset_files = [("hdfs://ssd02:8020/user/root/train_data/url_svmlight/Day%d" % i) + ".svm" for i in range(121)]
+            trainset_files = [("hdfs://b10g37:8020/user/root/train_data/url_svmlight/Day%d" % i) + ".svm" for i in range(121)]
         else:
-            trainset_files=["hdfs://ssd02:8020/user/root/train_data/kdd12.tr"]
+            trainset_files=["hdfs://b10g37:8020/user/root/train_data/kdd12.tr"]
 	train_filename_queue = tf.train.string_input_producer(trainset_files)
     	train_reader = tf.TextLineReader()
     	train_data_line=train_reader.read(train_filename_queue)

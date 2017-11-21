@@ -20,13 +20,13 @@ def get_optimizer(optimizer, learning_rate):
 
 def LogisticRegressionModel(weights, y, num_features, variable_partition_num=100):
     with tf.name_scope('parameter'):
-	weight = tf.get_variable("weight", initializer=tf.constant(0.0, shape=[num_features, 2]),
+	weight_lr = tf.get_variable("weight_lr", initializer=tf.constant(0.0, shape=[num_features, 2]),
                                  partitioner=tf.fixed_size_partitioner(variable_partition_num))
 	alpha = tf.constant([0.001])
 	b = tf.Variable(tf.constant(0.1, shape=[2]))
-	y_ = tf.sparse_tensor_dense_matmul(weights, weight) + b
+	y_ = tf.sparse_tensor_dense_matmul(weights, weight_lr) + b
     with tf.name_scope('loss'):
-	l2_norm = tf.reduce_sum(tf.square(weight))
+	l2_norm = tf.reduce_sum(tf.square(weight_lr))
 	cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=y_)
 	loss = tf.reduce_mean(cross_entropy)
 	loss_with_l2 = tf.add(loss, tf.multiply(alpha, l2_norm))
@@ -36,13 +36,13 @@ def SVMModel_with_linear(x_data, y, num_features, variable_partition_num=100):
     # Loss = max(0, 1-pred*actual) + alpha * L2_norm(A)^2
     # L2 regularization parameter, alpha
     with tf.name_scope('parameter'):
-	weight = tf.get_variable("weight", initializer=tf.constant(0.0, shape=[num_features, 2]),
+	weight_svm = tf.get_variable("weight_svm", initializer=tf.constant(0.0, shape=[num_features, 1]),
                                  partitioner=tf.fixed_size_partitioner(variable_partition_num))
 	b = tf.Variable(tf.constant(0.1, shape=[1]))
-	y_ = tf.subtract(tf.sparse_tensor_dense_matmul(x_data, weight), b)
+	y_ = tf.subtract(tf.sparse_tensor_dense_matmul(x_data, weight_svm), b)
 	alpha = tf.constant([0.001])
     with tf.name_scope('loss'):
-	l2_norm = tf.reduce_sum(tf.square(weight))
+	l2_norm = tf.reduce_sum(tf.square(weight_svm))
 	classification_term = tf.reduce_mean(tf.maximum(0., tf.subtract(1., tf.multiply(y_, y))))
 	loss = tf.add(classification_term, tf.multiply(alpha, l2_norm))
     return loss

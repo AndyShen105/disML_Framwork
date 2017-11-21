@@ -6,12 +6,7 @@ echo $1
 echo $2
 for(( i=$1; i < $2; i++ ))
 do
-    if [ $i -lt 10 ]
-    then
-        ssh ssd0$i $3
-    else
-        ssh ssd$i $3
-    fi
+    ssh b1g$i $3
     echo $x
 done
     

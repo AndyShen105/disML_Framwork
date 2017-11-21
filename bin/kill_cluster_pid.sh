@@ -22,7 +22,7 @@ fi
 
 for((step=$1;step<=$2;step++));
 do
-    if [ $step == 42 ]
+    if [ $step == 72 ]
     then
 	re=`netstat -anp|grep $3`
 	tem=${re%%/*}
@@ -32,14 +32,7 @@ do
 	    kill $pid
 	fi
     else
-	ip=""
-	if [ $step -lt 10 ]
-	then
-    	    ip="ssd0"$step
-	else
-    	    ip="ssd"$step
-	fi
-
+    	ip="b1g"$step
 	get_pid $ip $3
     fi
 done
