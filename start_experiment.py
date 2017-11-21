@@ -31,7 +31,7 @@ def wait_finish(job_id):
     logging.info("The job %s is finish !" % job_id)
 
 
-def execute(model, n_workers, n_intra, n_partition, optimizer, batch_size, learning_rate):
+def execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size, learning_rate):
     """
     :param cmd: 
     :return:
@@ -47,21 +47,23 @@ def execute(model, n_workers, n_intra, n_partition, optimizer, batch_size, learn
 	learning_rate
     ))
     if model == "SVM":
-        cmd = "./ps.sh %d %s %f 22222 %s %d %d %d 54686452" % (n_workers,   
-								optimizer, 
-								learning_rate,
-								model,
-								n_intra,
-								batch_size,
-								n_partition)
+        cmd = "./bin/ps.sh %d %d %s %f 22222 %s %d %d %d 54686452" % (n_workers,
+								  	n_ps,
+									optimizer, 
+									learning_rate,
+									model,
+									n_intra,
+									batch_size,
+									n_partition)
     elif model == "LR":
-        cmd = "./ps.sh %d  %s %f 22222 %s %d %d 54686452" % (n_workers,   
-								optimizer, 
-								learning_rate,
-								model,
-								n_intra,
-								batch_size,
-								n_partition)
+        cmd = "./bin/ps.sh %d %d %s %f 22222 %s %d %d %d 54686452" % (n_workers,
+								  	n_ps,
+									optimizer, 
+									learning_rate,
+									model,
+									n_intra,
+									batch_size,
+									n_partition)
     else:
         cmd = "./ps.sh %d  %s %f 22222 %s %d %d 54686452" % (n_workers,   
 								optimizer, 
@@ -78,13 +80,13 @@ def run(n_samples, model):
     for i in range(0, n_samples):
 	np.random.seed(i)
 	n_workers = np.random.randint(1, 35)
+	n_ps = 36-n_workers
 	n_intra = np.random.randint(1, 15)
 	n_partition = int(np.random.randint(0.1, 2)*(35-n_workers))
 	optimizer = Optimizer[np.random.randint(0, 6)]
 	batch_size = np.random.randint(10, 50)*100
 	learning_rate = np.random.randint(1, 1000)/10000.0
-	print learning_rate
-	execute(model,n_workers, n_intra, n_partition, optimizer, batch_size, learning_rate)
+	execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size, learning_rate)
 
 def main():
     run(.argv[1], argv[2])
