@@ -29,7 +29,7 @@ get_worker_conf(){
 for(( i=0; i<$2; i++ ))
 do
 {
-    echo "0">temp$i
+    echo "0"> /root/code/disML_Framwork/bin/temp$i
 }
 done
 
@@ -41,7 +41,7 @@ echo $ps
 get_worker_conf $1 $2 $5
 echo $worker
 
-for(( i=72; i>72-$1-$2; i-- ))
+for(( i=36; i>72-$1-$2; i-- ))
 do
 {
     if [ $i == 72 ]
@@ -63,7 +63,7 @@ do
             fi
             ssh $ip python /root/code/disML_Framwork/disML_Framwork.py $ps $worker --job_name=worker --task_index=$index --Learning_rate=$4 --ML_model=$6 --optimizer=$3 --n_intra_threads=$7 --Batch_size=$8 --n_partitions=$9 --num_Features=${10} --targeted_loss=${11} >> /root/code/$index".temp"
 	    echo "worker"$index" complated"
-            echo "1">temp$index
+            echo "1"> /root/code/disML_Framwork/bin/temp$index
         fi
     fi
 }&
@@ -75,7 +75,7 @@ do
     for(( i=0; i<$2; i++ ))
     do
     {
-        tem=`cat temp$i`
+        tem=`cat /root/code/disML_Framwork/bin/temp$i`
         flag=`expr $tem + $flag`
     }
     done
@@ -85,7 +85,7 @@ do
         break
     fi
 done
-rm -f temp*
+rm -f /root/code/disML_Framwork/bin/temp*
 rm -f /root/code/*.temp
 echo "work done"
 

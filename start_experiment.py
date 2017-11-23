@@ -22,7 +22,7 @@ Optimizer=["SGD","Adadelta","Adagrad","Ftrl","Adam","Momentum","RMSProp"]
 def wait_finish():
     start_time = time.time()
     dir = os.path.join("temp0")
-    while os.path.exists("/root/code/disML_Framwork/temp0"):
+    while os.path.exists("/root/code/disML_Framwork/bin/temp0"):
         logging.info("The job %s is not finish" % id)
         time.sleep(10)
 	if (time.time()-start_time)>18000:
