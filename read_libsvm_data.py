@@ -29,7 +29,7 @@ def parse_line_for_batch_for_libsvm(line):
     value = line.value.split(" ")
     label = []
     one_hot_label = []
-    if value[0]=="+1":
+    if value[0]=="1":
 	one_hot_label = [1, 0]
     else:
 	one_hot_label = [0, 1]
