@@ -65,13 +65,14 @@ def execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size,
 									batch_size,
 									n_partition)
     else:
-        cmd = "./ps.sh %d  %s %f 22222 %s %d %d 54686452" % (n_workers,   
-								optimizer, 
-								learning_rate,
-								model,
-								n_intra,
-								batch_size,
-								n_partition)
+        cmd = "~/code/disCNN_cifar/bin/ps.sh %d  %s %f 22222 %s %d %d %d " % (n_workers,
+                                                                        n_ps,
+                                                                        optimizer,
+                                                                        learning_rate,
+                                                                        model,
+                                                                        n_intra,
+                                                                        batch_size,
+                                                                        n_partition)
     logging.info("run command: %s" % cmd)
     id = model+"_"+str(n_workers)+"_"+str(n_intra)+"_"+optimizer+"_"+str(learning_rate)+"_"+str(batch_size)+"_"+str(n_partition)
     #p = pexpect.spawn(cmd)
@@ -85,7 +86,10 @@ def run(n_samples, model):
 	n_intra = np.random.randint(1, 15)
 	n_partition = int(np.random.randint(0.1, 2)*n_ps)
 	optimizer = Optimizer[np.random.randint(0, 6)]
-	batch_size = np.random.randint(10, 50)*100
+	if model != "CNN":
+	    batch_size = np.random.randint(10, 50)*100
+	else:
+	    batch_size = np.random.randint(1, 10)*100
 	learning_rate = np.random.randint(1, 1000)/10000.0
 	threads = []
 	t1 = threading.Thread(target=execute,args=(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size, learning_rate))
