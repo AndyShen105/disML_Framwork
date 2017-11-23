@@ -61,8 +61,8 @@ do
             then
                 sleep 0.5
             fi
-            ssh $ip python /root/code/disML_Framwork/disML_Framwork.py $ps $worker --job_name=worker --task_index=$index --targeted_loss=$4 --ML_model=$6 --optimizer=$3 --n_intra_threads=$7 --Batch_size=$8 --num_Features=$9>> /root/code/$index".temp"
-            echo "worker"$index" complated"
+            ssh $ip python /root/code/disML_Framwork/disML_Framwork.py $ps $worker --job_name=worker --task_index=$index --Learning_rate=$4 --ML_model=$6 --optimizer=$3 --n_intra_threads=$7 --Batch_size=$8 --n_partitions=$9 --num_Features=${10} --targeted_loss=${11} >> /root/code/$index".temp"
+	    echo "worker"$index" complated"
             echo "1">temp$index
         fi
     fi

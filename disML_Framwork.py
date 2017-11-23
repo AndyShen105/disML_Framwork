@@ -57,7 +57,6 @@ server = tf.train.Server(
     job_name=FLAGS.job_name,
     task_index=FLAGS.task_index,
     config=server_config)
-	argeted_loss
 
 if FLAGS.job_name == "ps":
     server.join()
@@ -147,7 +146,8 @@ elif FLAGS.job_name == "worker":
 		saver.save(sess, save_path="train_logs", global_step=global_step)
 		check_point_time = time.time()
 	    re = str(step+1)+","+str(n_Workers)+","+str(n_intra_threads)+","+str(cost)+","+str(duration)+","+str(time.time())
-	    process = open("/root/ex_result/baseline/new_url_"+FLAGS.ML_model+"_"+str(learning_rate)+"_"+str(batch_size)+"_process.csv","a+")
+	    job_id = FLAGS.ML_model+"_"+str(n_Workers)+"_"+str(n_intra_threads)+"_"+Optimizer+"_"+str(learning_rate)+"_"+str(batch_size)+"_"+str(n_partitions)
+	    process = open("/root/ex_result/baseline/"+job_id+"_process.csv","a+")
 	    process.write(re+"\r\n")
 	    process.close()
 	    
@@ -157,7 +157,7 @@ elif FLAGS.job_name == "worker":
 	   
             batch_time = time.time()
 	final_re = str(step+1)+","+str(n_Workers)+","+str(n_intra_threads)+","+str(cost)+","+str(float(time.time()-begin_time))
-	result = open("/root/ex_result/baseline/new_url_"+FLAGS.ML_model+"_"+str(learning_rate)+"_"+str(batch_size)+"_result.csv","a+")
+	result = open("/root/ex_result/baseline/"+job_id+"_result.csv","a+")
 	result.write(final_re+"\r\n")
 	result.close()	
     sv.stop 

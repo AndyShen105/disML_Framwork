@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+import threading
 import os
 import time
 import pexpect
@@ -8,6 +9,8 @@ import time
 import numpy as np
 import logging
 import sys
+
+id = ""
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                     datefmt='%m-%d %H:%M',
@@ -16,19 +19,16 @@ logging.basicConfig(level=logging.DEBUG,
 # n_workers, n_ps, n_intra, n_iter, n_partition, optimizer, batch_size, learning_rate
 Optimizer=["SGD","Adadelta","Adagrad","Ftrl","Adam","Momentum","RMSProp"]
 
-def wait_finish(job_id):
+def wait_finish():
     start_time = time.time()
-    dir = os.path.join("/root/pstuner/log", job_id)
-    while not os.path.exists(dir):
-        logging.info("The job %s is not finish" % job_id)
-        if (time.time() - start_time) > best_time:
-            logging.info("Run too long and break")
-            pexpect.run("python client.py --action dump_log %s" % job_id)
-            break
-        else:
-            time.sleep(10)
+    dir = os.path.join("temp0")
+    while os.path.exists("/root/code/disML_Framwork/temp0"):
+        logging.info("The job %s is not finish" % id)
+        time.sleep(10)
+	if (time.time()-start_time)>18000:
+	    os.system("./bin/kill_cluster_pid.sh 36 72 22222")
 
-    logging.info("The job %s is finish !" % job_id)
+    logging.info("The job %s is finish !" % id)
 
 
 def execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size, learning_rate):
@@ -47,7 +47,7 @@ def execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size,
 	learning_rate
     ))
     if model == "SVM":
-        cmd = "./bin/ps.sh %d %d %s %f 22222 %s %d %d %d 54686452" % (n_workers,
+        cmd = "./bin/ps.sh %d %d %s %f 22222 %s %d %d %d 3231961 0.07" % (n_workers,
 								  	n_ps,
 									optimizer, 
 									learning_rate,
@@ -56,7 +56,7 @@ def execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size,
 									batch_size,
 									n_partition)
     elif model == "LR":
-        cmd = "./bin/ps.sh %d %d %s %f 22222 %s %d %d %d 54686452" % (n_workers,
+        cmd = "sh ./bin/ps.sh %d %d %s %f 22222 %s %d %d %d 54686452 0.05" % (n_workers,
 								  	n_ps,
 									optimizer, 
 									learning_rate,
@@ -73,24 +73,30 @@ def execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size,
 								batch_size,
 								n_partition)
     logging.info("run command: %s" % cmd)
+    id = model+"_"+str(n_workers)+"_"+str(n_intra)+"_"+optimizer+"_"+str(learning_rate)+"_"+str(batch_size)+"_"+str(n_partition)
     #p = pexpect.spawn(cmd)
-    print cmd
+    #os.system(cmd+" >> running_log.out")
+    return id
     
 def run(n_samples, model):
     for i in range(0, n_samples):
-	np.random.seed(i)
 	n_workers = np.random.randint(1, 35)
 	n_ps = 36-n_workers
 	n_intra = np.random.randint(1, 15)
-	n_partition = int(np.random.randint(0.1, 2)*(35-n_workers))
+	n_partition = int(np.random.randint(0.1, 2)*n_ps)
 	optimizer = Optimizer[np.random.randint(0, 6)]
 	batch_size = np.random.randint(10, 50)*100
 	learning_rate = np.random.randint(1, 1000)/10000.0
-	execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size, learning_rate)
-
+	threads = []
+	t1 = threading.Thread(target=execute,args=(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size, learning_rate))
+	threads.append(t1)
+	#job_id = execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size, learning_rate)
+        t1.setDaemon(True)
+        t1.start()
+	time.sleep(10)
+	wait_finish()
 def main():
-    run(.argv[1], argv[2])
-
+    run(int(sys.argv[1]), sys.argv[2])
 if __name__=="__main__":
     main()
 
