@@ -22,17 +22,20 @@ Optimizer=["SGD","Adadelta","Adagrad","Ftrl","Adam","Momentum","RMSProp"]
 def wait_finish(model, id):
     start_time = time.time()
     if model != "CNN":
-	path = "/root/code/disML_Framwork/bin/temp0"
+		path = "/root/code/disML_Framwork/bin/temp0"
+		maxTime = 30000.0
     else:
-	path = "/root/code/disCNN_cifar/bin/temp0"
+		path = "/root/code/disCNN_cifar/bin/temp0"
+		maxTime = 18000.0
     while os.path.exists(path):
         logging.info("The job %s is not finish" % id)
-        time.sleep(3)
-	if (time.time()-start_time)>18000:
-	    os.system("./bin/kill_cluster_pid.sh 36 72 22222")
+		logging.info("Running time is %f s" % (time.time()-start_time))
+        time.sleep(10)
+		if (time.time()-start_time)>maxTime :
+	    	os.system("./bin/kill_cluster_pid.sh 36 72 22222")
+			break
 
     logging.info("The job %s is finish !" % id)
-
 
 def execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size, learning_rate):
     """
@@ -92,9 +95,10 @@ def run(n_samples, model):
 	optimizer = Optimizer[np.random.randint(0, 6)]
 	if model != "CNN":
 	    batch_size = np.random.randint(10, 50)*100
+		learning_rate = np.random.randint(1, 10)/10000.0
 	else:
 	    batch_size = np.random.randint(1, 10)*100
-	learning_rate = np.random.randint(1, 10)/100000.0
+		learning_rate = np.random.randint(1, 10)/100000.0
 	threads = []
 	id = model+"_"+str(n_workers)+"_"+str(n_intra)+"_"+optimizer+"_"+str(learning_rate)+"_"+str(batch_size)+"_"+str(n_partition)
 	t1 = threading.Thread(target=execute,args=(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size, learning_rate))
