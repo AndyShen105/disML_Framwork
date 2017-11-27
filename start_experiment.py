@@ -62,7 +62,7 @@ def execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size,
 									batch_size,
 									n_partition)
     elif model == "LR":
-        cmd = "sh ./bin/ps.sh %d %d %s %f 22222 %s %d %d %d 54686452 0.05" % (n_workers,
+        cmd = "sh ./bin/ps.sh %d %d %s %f 22222 %s %d %d %d 54686452 0.2" % (n_workers,
 								  	n_ps,
 									optimizer, 
 									learning_rate,
@@ -80,7 +80,6 @@ def execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size,
                                                                         batch_size,
                                                                         n_partition)
     logging.info("run command: %s" % cmd)
-    #p = pexpect.spawn(cmd)
     os.system(cmd+" >> running_log.out")
    
     
