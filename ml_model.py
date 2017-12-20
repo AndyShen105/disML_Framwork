@@ -14,16 +14,16 @@ def get_optimizer(optimizer, learning_rate):
     elif optimizer == "Adam":
 	return  tf.train.AdamOptimizer(learning_rate)
     elif optimizer == "Momentum":
-	return  tf.train.MomentumOptimizer(learning_rate)
+	return  tf.train.MomentumOptimizer(learning_rate, 0.9)
     elif optimizer == "RMSProp":
-	return  tf.train.RMSProp(learning_rate)
+	return  tf.train.RMSPropOptimizer(learning_rate)
 
 def LogisticRegressionModel(weights, y, num_features, variable_partition_num):
     with tf.name_scope('parameter'):
 	weight_lr = tf.get_variable("weight_lr", initializer=tf.constant(0.0, shape=[num_features, 2]),
                                  partitioner=tf.fixed_size_partitioner(variable_partition_num))
 	alpha = tf.constant([0.001])
-	b = tf.Variable(tf.constant(0.1, shape=[2]))
+	b = tf.Variable(tf.constant(0.1, shape=[1,2]))
 	y_ = tf.sparse_tensor_dense_matmul(weights, weight_lr) + b
     with tf.name_scope('loss'):
 	l2_norm = tf.reduce_sum(tf.square(weight_lr))

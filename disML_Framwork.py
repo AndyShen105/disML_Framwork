@@ -10,7 +10,7 @@ from ml_model import *
 from read_libsvm_data import *
 
 #log config
-os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
+os.environ['TF_CPP_MIN_LOG_LEVEL']='1'
 os.environ['GRPC_VERBOSITY_LEVEL']='DEBUG'
    
 # input flags
@@ -72,7 +72,7 @@ elif FLAGS.job_name == "worker":
 
 	#inout data
 	if FLAGS.ML_model == "SVM":
-            trainset_files = [("hdfs://b10g37:8020/user/root/train_data/url_svmlight/Day%d" % i) + ".svm" for i in range(121)]
+            trainset_files = ["hdfs://b10g37:8020/user/root/train_data/url_combined"]
         else:
             trainset_files=["hdfs://b10g37:8020/user/root/train_data/kdd12.tr"]
 	train_filename_queue = tf.train.string_input_producer(trainset_files)
@@ -104,7 +104,7 @@ elif FLAGS.job_name == "worker":
 	    if FLAGS.ML_model == "SVM":
 		train_op = grad_op.minimize(SVM_loss, global_step=global_step)
 	    else:
-	    	train_op = grad_op.minimize(LR_loss, global_step=global_step)
+	    	train_op = grad_op.minimize(LR_loss_l2, global_step=global_step)
 	saver = tf.train.Saver()
         #summary_op = tf.merge_all_summaries()
 	init_op = tf.global_variables_initializer()
@@ -125,7 +125,7 @@ elif FLAGS.job_name == "worker":
 	batch_time = time.time()
 	cost = 1000000.0
 	step = 0
-	while (not sv.should_stop()) and (step <= 50000 ) and not (cost < targeted_loss and step>5000) :
+	while not sv.should_stop() and not (cost < targeted_loss) or (step<1000 and (FLAGS.ML_model=="SVM")) :
 	    label_one_hot,label,indices,sparse_indices,weight_list,read_count = read_batch(sess, train_data_line, batch_size)
 	    if FLAGS.ML_model=="LR":	
             	_,cost, step= sess.run([train_op, LR_loss, global_step], feed_dict = { y: label_one_hot,
@@ -156,8 +156,8 @@ elif FLAGS.job_name == "worker":
                             " Bctch_Time: %fs" % float(duration))
 	   
             batch_time = time.time()
-	final_re = str(step+1)+","+str(n_Workers)+","+str(n_intra_threads)+","+str(cost)+","+str(float(time.time()-begin_time))
-	result = open("/root/ex_result/baseline/"+job_id+"_result.csv","a+")
+	final_re = FLAGS.ML_model+","+str(step+1)+","+str(n_Workers)+","+str(n_intra_threads)+","+Optimizer+","+str(learning_rate)+","+str(batch_size)+","+str(n_partitions)+","+str(cost)+","+str(float(time.time()-begin_time))
+	result = open("/root/ex_result/baseline/svm_result.csv","a+")
 	result.write(final_re+"\r\n")
 	result.close()	
     sv.stop 
