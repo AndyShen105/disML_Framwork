@@ -38,7 +38,7 @@ def SVMModel_with_linear(x_data, y, num_features, variable_partition_num):
     with tf.name_scope('parameter'):
 	weight_svm = tf.get_variable("weight_svm", initializer=tf.constant(0.0, shape=[num_features, 1]),
                                  partitioner=tf.fixed_size_partitioner(variable_partition_num))
-	b = tf.Variable(tf.constant(0.1, shape=[1]))
+	b = tf.Variable(tf.constant(0.1, shape=[1, 1]))
 	y_ = tf.subtract(tf.sparse_tensor_dense_matmul(x_data, weight_svm), b)
 	alpha = tf.constant([0.001])
     with tf.name_scope('loss'):

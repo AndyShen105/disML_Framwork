@@ -72,7 +72,7 @@ elif FLAGS.job_name == "worker":
 
 	#inout data
 	if FLAGS.ML_model == "SVM":
-            trainset_files = ["hdfs://b10g37:8020/user/root/train_data/url_combined"]
+            trainset_files = ["hdfs://b10g37:8020/user/root/train_data/kddb"]
         else:
             trainset_files=["hdfs://b10g37:8020/user/root/train_data/kdd12.tr"]
 	train_filename_queue = tf.train.string_input_producer(trainset_files)
@@ -126,7 +126,9 @@ elif FLAGS.job_name == "worker":
 	cost = 1000000.0
 	step = 0
 	while not sv.should_stop() and not (cost < targeted_loss) or (step<1000 and (FLAGS.ML_model=="SVM")) :
+	    print ("info: start read data process")
 	    label_one_hot,label,indices,sparse_indices,weight_list,read_count = read_batch(sess, train_data_line, batch_size)
+	    print ("info: start training process")
 	    if FLAGS.ML_model=="LR":	
             	_,cost, step= sess.run([train_op, LR_loss, global_step], feed_dict = { y: label_one_hot,
 										sp_indices: sparse_indices,
@@ -141,6 +143,7 @@ elif FLAGS.job_name == "worker":
 										weights_val: weight_list})
 	
 	    duration = time.time()-batch_time
+	    print ("info: start ")
 	    if (time.time()-check_point_time>600) and is_chief:
 		print ("do a check_points")
 		saver.save(sess, save_path="train_logs", global_step=global_step)
@@ -150,7 +153,6 @@ elif FLAGS.job_name == "worker":
 	    process = open("/root/ex_result/baseline/"+job_id+"_process.csv","a+")
 	    process.write(re+"\r\n")
 	    process.close()
-	    
 	    print("Step: %d," % (step+1),
                             " Loss: %f" % cost,
                             " Bctch_Time: %fs" % float(duration))

@@ -17,24 +17,23 @@ logging.basicConfig(level=logging.DEBUG,
                     )
 
 # n_workers, n_ps, n_intra, n_iter, n_partition, optimizer, batch_size, learning_rate
-Optimizer=["SGD","Adadelta","Adagrad","Ftrl","Adam","Momentum","RMSProp"]
+Optimizer=["SGD","Adadelta","Adagrad","Adam","Momentum","RMSProp"]
 
 def wait_finish(model, id):
     start_time = time.time()
     if model != "CNN":
-		path = "/root/code/disML_Framwork/bin/temp0"
-		maxTime = 30000.0
+	path = "/root/code/disML_Framwork/bin/temp0"
+	maxTime = 36000.0
     else:
-		path = "/root/code/disCNN_cifar/bin/temp0"
-		maxTime = 18000.0
+	path = "/root/code/disCNN_cifar/bin/temp0"
+	maxTime = 10800.0
     while os.path.exists(path):
         logging.info("The job %s is not finish" % id)
-		logging.info("Running time is %f s" % (time.time()-start_time))
+	logging.info("Running time is %f s" % (time.time()-start_time))
         time.sleep(10)
-		if (time.time()-start_time)>maxTime :
-	    	os.system("./bin/kill_cluster_pid.sh 36 72 22222")
-			break
-
+	if (time.time()-start_time)>maxTime :
+	    os.system("./bin/kill_cluster_pid.sh 1 36 22222")
+	    break
     logging.info("The job %s is finish !" % id)
 
 def execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size, learning_rate):
@@ -53,7 +52,7 @@ def execute(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size,
 	learning_rate
     ))
     if model == "SVM":
-        cmd = "./bin/ps.sh %d %d %s %f 22222 %s %d %d %d 3231961 0.07" % (n_workers,
+        cmd = "./bin/ps.sh %d %d %s %f 22222 %s %d %d %d 29890095 0.1" % (n_workers,
 								  	n_ps,
 									optimizer, 
 									learning_rate,
@@ -91,13 +90,12 @@ def run(n_samples, model):
 	n_partition = int(np.random.randint(1, 50)*n_ps/10)
 	if n_partition == 0:
 	    n_partition=1
-	optimizer = Optimizer[np.random.randint(0, 6)]
+	optimizer = Optimizer[np.random.randint(0, 5)]
 	if model != "CNN":
 	    batch_size = np.random.randint(10, 50)*100
-		learning_rate = np.random.randint(1, 10)/10000.0
 	else:
 	    batch_size = np.random.randint(1, 10)*100
-		learning_rate = np.random.randint(1, 10)/100000.0
+	learning_rate = np.random.randint(1, 10)/100000.0
 	threads = []
 	id = model+"_"+str(n_workers)+"_"+str(n_intra)+"_"+optimizer+"_"+str(learning_rate)+"_"+str(batch_size)+"_"+str(n_partition)
 	t1 = threading.Thread(target=execute,args=(model, n_workers, n_ps, n_intra, n_partition, optimizer, batch_size, learning_rate))
